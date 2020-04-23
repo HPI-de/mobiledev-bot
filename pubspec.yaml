@@ -1,0 +1,17 @@
+name: hpi_mobiledev_bot
+description: Telegram bot of the MobileDev-Club
+
+environment:
+  sdk: ">=2.7.0 <3.0.0"
+
+dependencies:
+  dartx: ^0.3.0
+  logger: ^0.8.3
+  meta: ^1.1.8
+  mongo_dart: ^0.4.0
+  teledart: ^0.0.39
+  time_machine: ^0.9.12
+
+dev_dependencies:
+  test: ^1.0.0
+  pedantic: ^1.8.0
