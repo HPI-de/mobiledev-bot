@@ -81,10 +81,10 @@ void sendMeetingAnnouncement(Meeting meeting) async {
           .getZoneOrNull('Europe/Berlin'))
       .localDateTime;
 
-  final participants = meeting.participantUsernames.isEmpty
+  final participants = meeting.participantIds.isEmpty
       ? '👻 *cricket noise*'
       : [
-          for (final participant in meeting.participantUsernames.sorted())
+          for (final participant in meeting.participantIds.sorted())
             // (await telegram.getChat(_mobileDevGroupChatId)).
             '\n• @$participant',
         ].join();

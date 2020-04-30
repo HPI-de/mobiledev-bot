@@ -17,20 +17,19 @@ class MeetingBloc {
   Future<void> createMeeting(Meeting meeting) =>
       _service.createMeeting(meeting);
 
-  Future<Meeting> addParticipant(int meetingId, String username) async {
+  Future<Meeting> addParticipant(int meetingId, int participantId) async {
     final oldMeeting = await _service.getMeeting(meetingId).first;
     final newMeeting = oldMeeting.copyWith(
-      participantUsernames: oldMeeting.participantUsernames.union({username}),
+      participantIds: oldMeeting.participantIds.union({participantId}),
     );
     await _service.updateMeeting(newMeeting);
     return newMeeting;
   }
 
-  Future<Meeting> removeParticipant(int meetingId, String username) async {
+  Future<Meeting> removeParticipant(int meetingId, int participantId) async {
     final oldMeeting = await _service.getMeeting(meetingId).first;
     final newMeeting = oldMeeting.copyWith(
-      participantUsernames:
-          oldMeeting.participantUsernames.difference({username}),
+      participantIds: oldMeeting.participantIds.difference({participantId}),
     );
     await _service.updateMeeting(newMeeting);
     return newMeeting;
@@ -72,35 +71,34 @@ class _MeetingService {
 class Meeting {
   const Meeting({
     @required this.start,
-    @required this.participantUsernames,
+    @required this.participantIds,
   })  : assert(start != null),
-        assert(participantUsernames != null);
+        assert(participantIds != null);
 
   Meeting.fromJson(Map<String, dynamic> json)
       : this(
           start: Instant.fromEpochSeconds(json['start']),
-          participantUsernames: (json['participantUsernames'] as List<dynamic>)
-              .cast<String>()
-              .toSet(),
+          participantIds:
+              (json['participantIds'] as List<dynamic>).cast<int>().toSet(),
         );
 
   int get id => start.epochSeconds;
   final Instant start;
-  final Set<String> participantUsernames;
+  final Set<int> participantIds;
 
   Meeting copyWith({
-    Set<String> participantUsernames,
+    Set<int> participantIds,
   }) {
     return Meeting(
       start: start,
-      participantUsernames: this.participantUsernames ?? participantUsernames,
+      participantIds: this.participantIds ?? participantIds,
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
       'start': start.epochSeconds,
-      'participantUsernames': participantUsernames.toList(),
+      'participantIds': participantIds.toList(),
     };
   }
 }
