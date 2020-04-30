@@ -23,6 +23,25 @@ class MeetingBloc {
   Stream<Meeting> getNextMeeting() => _service.getNextMeeting();
   Future<void> createMeeting(Meeting meeting) =>
       _service.createMeeting(meeting);
+
+  Future<Meeting> addParticipant(int meetingId, String username) async {
+    final oldMeeting = await _service.getMeeting(meetingId).first;
+    final newMeeting = oldMeeting.copyWith(
+      participantUsernames: oldMeeting.participantUsernames.union({username}),
+    );
+    await _service.updateMeeting(newMeeting);
+    return newMeeting;
+  }
+
+  Future<Meeting> removeParticipant(int meetingId, String username) async {
+    final oldMeeting = await _service.getMeeting(meetingId).first;
+    final newMeeting = oldMeeting.copyWith(
+      participantUsernames:
+          oldMeeting.participantUsernames.difference({username}),
+    );
+    await _service.updateMeeting(newMeeting);
+    return newMeeting;
+  }
 }
 
 @immutable
