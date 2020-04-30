@@ -9,7 +9,7 @@ const meetingBloc = MeetingBloc();
 
 @immutable
 class MeetingBloc {
-  const MeetingBloc(); // : _service = const MeetingService();
+  const MeetingBloc();
 
   _MeetingService get _service => const _MeetingService();
 
@@ -61,7 +61,7 @@ class _MeetingService {
   Future<void> createMeeting(Meeting meeting) async {
     assert(meeting != null);
 
-    await _store.record(meeting.id).update(db, meeting.toJson());
+    await _store.record(meeting.id).add(db, meeting.toJson());
   }
 
   Future<void> updateMeeting(Meeting meeting) async {
