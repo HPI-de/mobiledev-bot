@@ -60,6 +60,7 @@ class Member {
   const Member(
     this.id, {
     this.username,
+    this.name,
     this.privateChatId,
   }) : assert(id != null);
 
@@ -67,11 +68,13 @@ class Member {
       : this(
           id,
           username: json['username'],
+          name: json['name'],
           privateChatId: json['privateChatId'],
         );
 
   final int id;
   final String username;
+  final String name;
   final int privateChatId;
 
   Member copyWith({
@@ -86,6 +89,7 @@ class Member {
   Map<String, dynamic> toJson() {
     return {
       'username': username,
+      'name': name,
       'privateChatId': privateChatId,
     };
   }
