@@ -11,15 +11,19 @@ import 'main.dart';
 Future<void> welcomeNewMemberInGroup(User newMember) async {
   await teledart.telegram.sendMessage(
     mobileDevGroupChatId,
-    'Hi, ${newMember.first_name}! Welcome to the MobileDev club! 🐰🥚\n'
-    'Please text me privately at @$botName.',
+    "Hi, ${newMember.first_name}! I'm thrilled to see you joined the MobileDev "
+    "club! 🐰🥚 Do you mind texting me privately at @$botName? I'd love to "
+    'give you a quick tour!',
   );
 }
 
 Future<void> welcomeNewMemberPrivately(User newMember) async {
   await teledart.telegram.sendMessage(
     mobileDevGroupChatId, // TODO(marcelgarus): Look up chat id by user.
-    'Hi there! TODO: I should tell you something about my commands.',
+    "Nice! 😊 So, you're probably wondering why I exist… Basically, I take "
+    'care about announcing the meetings and taking notes of who will '
+    "participate. If for some reason, you'll miss a meeting, just text "
+    "/missing to me. And that's about it!",
   );
 }
 
@@ -32,7 +36,7 @@ Future<void> makeUserFeelBad(User user) async {
 
 void sendMeetingAnnouncement(Meeting meeting) async {
   final _meetingTimePattern = LocalDateTimePattern.createWithCulture(
-    'ddd., d.MMM, H:mm "Uhr"',
+    'ddd., d. MMM, H:mm "Uhr"',
     await Cultures.getCulture('de-DE'),
   );
 
