@@ -40,6 +40,10 @@ void main() async {
   await TimeMachine.initialize();
 
   await initDb();
+  await meetingBloc.createMeeting(Meeting(
+    start: Instant.now().add(Time(hours: 1)),
+    participantUsernames: {'JonasWanke'},
+  ));
 
   final nextMeeting = await meetingBloc.getNextMeeting().first;
   logger.i(json.encode(nextMeeting.toJson()));
