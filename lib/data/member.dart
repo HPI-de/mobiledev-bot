@@ -15,6 +15,13 @@ class MemberBloc {
 
   Stream<Member> getMember(int id) => _service.getMember(id);
   Future<void> createMember(Member member) => _service.createMember(member);
+
+  Future<Member> updatePrivateChatId(int memberId, int privateChatId) async {
+    final oldMember = await _service.getMember(memberId).first;
+    final newMember = oldMember.copyWith(privateChatId: privateChatId);
+    await _service.updateMember(newMember);
+    return newMember;
+  }
 }
 
 @immutable
@@ -43,26 +50,43 @@ class _MemberService {
 
     await _store.record(member.id).update(db, member.toJson());
   }
+
+  Future<void> updateMember(Member member) async {
+    await _store.record(member.id).put(db, member.toJson());
+  }
 }
 
 class Member {
   const Member(
     this.id, {
     this.username,
+    this.privateChatId,
   }) : assert(id != null);
 
   Member.fromJson(int id, Map<String, dynamic> json)
       : this(
           id,
           username: json['username'],
+          privateChatId: json['privateChatId'],
         );
 
   final int id;
   final String username;
+  final int privateChatId;
+
+  Member copyWith({
+    int privateChatId,
+  }) {
+    return Member(
+      id,
+      privateChatId: this.privateChatId ?? privateChatId,
+    );
+  }
 
   Map<String, dynamic> toJson() {
     return {
       'username': username,
+      'privateChatId': privateChatId,
     };
   }
 }
