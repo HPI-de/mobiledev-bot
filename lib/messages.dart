@@ -38,9 +38,9 @@ Future<void> welcomeNewMemberInGroup(User newMember) async {
   );
 }
 
-Future<void> welcomeNewMemberPrivately(User newMember) async {
+Future<void> welcomeNewMemberPrivately(Member member) async {
   await telegram.sendMessage(
-    mobileDevGroupChatId, // TODO(marcelgarus): Look up chat id by user.
+    member.privateChatId,
     "Nice! 😊 So, you're probably wondering why I exist… Basically, I take "
     'care about announcing the meetings and taking notes of who will '
     "participate. If for some reason, you'll miss a meeting, just text "
@@ -48,14 +48,14 @@ Future<void> welcomeNewMemberPrivately(User newMember) async {
   );
 }
 
-Future<void> makeUserFeelBad(User user) async {
+Future<void> makeMemberFeelBad(Member member) async {
   await telegram.sendMessage(
-    mobileDevGroupChatId, // TODO(marcelgarus): Look up chat id by user.
+    member.privateChatId,
     'You break my heart! 💔😥\nTo make you feel bad, please look at this '
     'picture of a sad puppy for 5 seconds and regret your decision:',
   );
   await telegram.sendPhoto(
-    mobileDevGroupChatId, // TODO(marcelgarus): Look up chat id by user.
+    member.privateChatId,
     random(sadPuppies),
     reply_markup: InlineKeyboardMarkup(
       inline_keyboard: [

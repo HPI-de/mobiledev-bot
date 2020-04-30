@@ -49,6 +49,7 @@ void main() async {
   final token = Platform.environment['TELEGRAM_BOT_TOKEN'];
   teledart = TeleDart(Telegram(token), Event());
   telegram = teledart.telegram;
+
   // telegram.sendMessage(_mobileDevGroupChatId, 'Hey MobileDev-Club :)');
 
   final bot = await teledart.start();
@@ -71,10 +72,10 @@ void main() async {
     if (callback.data == ButtonCallbacks.changeAttendance) {
       final user = callback.message.from;
       final nextMeeting = await meetingBloc.getNextMeeting().first;
-      if (nextMeeting.participantUsernames.contains(user.username)) {
+      if (nextMeeting.participantIds.contains(user.id)) {
         _handleUserWillBeMissing(user);
       } else {
-        _handleUserWillBeMissing(user);
+        _handleUserWillBeComing(user);
       }
     }
   });
@@ -100,28 +101,53 @@ void main() async {
 /// A new user joined the group.
 void _handleNewGroupMember(Message message, User newMember) async {
   logger.i('A new user joined a chat.');
+  await memberBloc.createMember(Member(
+    newMember.id,
+    username: newMember.username,
+    name: [newMember.first_name, newMember.last_name].join(' '),
+  ));
   await welcomeNewMemberInGroup(newMember);
 }
 
 /// A user sent `/start` in a private chat.
 void _handleStartCommand(Message message) async {
-  // TODO(marcelgarus): Remember that the user `message.from.id` has private chat `message.chat.id` with us.
-  await welcomeNewMemberPrivately(message.from);
+  await memberBloc.updatePrivateChatId(message.from.id, message.chat.id);
+  final member = await _getMemberByUser(message.from);
+  if (member == null) {
+    return;
+  }
+  await welcomeNewMemberPrivately(member);
 }
 
 /// A user will be coming to the next meeting.
 void _handleUserWillBeComing(User user) async {
-  logger.i('@${user.username} will participate :/');
+  logger.i('@${user.username} will participate :D');
+  final member = await _getMemberByUser(user);
+  if (member == null) {
+    return;
+  }
   final nextMeeting = await meetingBloc.getNextMeeting().first;
-  await meetingBloc.addParticipant(nextMeeting.id, user.username);
+  await meetingBloc.addParticipant(nextMeeting.id, member.id);
 }
 
 /// A user will be absent from the next meeting.
 void _handleUserWillBeMissing(User user) async {
   logger.i("@${user.username} won't participate :/");
-  await makeUserFeelBad(user);
+  final member = await _getMemberByUser(user);
+  if (member == null) {
+    return;
+  }
   final nextMeeting = await meetingBloc.getNextMeeting().first;
-  await meetingBloc.removeParticipant(nextMeeting.id, user.username);
+  await makeMemberFeelBad(member);
+  await meetingBloc.removeParticipant(nextMeeting.id, user.id);
+}
+
+Future<Member> _getMemberByUser(User user) async {
+  if (!await memberBloc.doesMemberExist(user.id)) {
+    logger.e("@${user.username} is in group, but I don't know them yet.");
+    return null;
+  }
+  return memberBloc.getMember(user.id).first;
 }
 
 // - Anwesenheitsliste

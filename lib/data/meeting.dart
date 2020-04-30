@@ -1,6 +1,7 @@
 import 'package:dartx/dartx.dart';
 import 'package:meta/meta.dart';
 import 'package:sembast/sembast.dart';
+import 'package:teledart/model.dart';
 import 'package:time_machine/time_machine.dart';
 
 import 'db.dart';

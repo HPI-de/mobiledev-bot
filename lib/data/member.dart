@@ -3,6 +3,7 @@ import 'package:meta/meta.dart';
 import 'package:sembast/sembast.dart';
 import 'package:time_machine/time_machine.dart';
 
+import '../utils.dart';
 import 'db.dart';
 
 const memberBloc = MemberBloc();
@@ -14,9 +15,20 @@ class MemberBloc {
   _MemberService get _service => const _MemberService();
 
   Stream<Member> getMember(int id) => _service.getMember(id);
-  Future<void> createMember(Member member) => _service.createMember(member);
+  Future<bool> doesMemberExist(int id) => _service.doesMemberExist(id);
+  Future<void> createMember(Member member) async {
+    if (!await _service.doesMemberExist(member.id)) {
+      await _service.createMember(member);
+      logger.i('Created member $member.');
+    } else {
+      logger.i('Member with id ${member.id} already exists.');
+    }
+  }
 
   Future<Member> updatePrivateChatId(int memberId, int privateChatId) async {
+    if (!await _service.doesMemberExist(memberId)) {
+      return null;
+    }
     final oldMember = await _service.getMember(memberId).first;
     final newMember = oldMember.copyWith(privateChatId: privateChatId);
     await _service.updateMember(newMember);
@@ -30,6 +42,7 @@ class _MemberService {
 
   static final _store = intMapStoreFactory.store('members');
 
+  Future<bool> doesMemberExist(int id) => _store.record(id).exists(db);
   Stream<Member> getMember(int id) =>
       _store.record(id).onSnapshot(db).map((s) => Member.fromJson(id, s.value));
   Stream<Member> getNextMember() {
