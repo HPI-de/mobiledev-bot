@@ -2,26 +2,33 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:dartx/dartx.dart';
+import 'package:hpi_mobiledev_bot/messages.dart';
 import 'package:teledart/model.dart';
 import 'package:teledart/teledart.dart';
 import 'package:teledart/telegram.dart';
 import 'package:time_machine/time_machine.dart';
-import 'package:time_machine/time_machine_text_patterns.dart';
 
 import 'data.dart';
 import 'utils.dart';
 
-const _mobileDevGroupChatId = -421105343;
+const mobileDevGroupChatId = -421105343;
+String botName;
+TeleDart teledart;
+Telegram telegram;
+
+abstract class ButtonCallbacks {
+  static const changeAttendance = 'change_attendance';
+}
 
 extension OnlyInPrivateChats on Stream<Message> {
   /// For every emitted [Message], check if we are in a group chat. If we are,
   /// tell the user to instead execute the command in a private chat. Otherwise,
   /// forward the command to the returned [Stream].
-  Stream<Message> onlyInPrivateChats(TeleDart teledart, String botName) async* {
+  Stream<Message> onlyInPrivateChats() async* {
     await for (final message in this) {
       if (message.chat.type == 'group') {
-        await teledart.replyMessage(
-            message, 'Sorry, please send that to me privately at @$botName.');
+        await teledart.replyMessage(message,
+            'To not spam this group, please send that to me privately at @$botName.');
       } else {
         yield message;
       }
@@ -33,20 +40,25 @@ void main() async {
   await TimeMachine.initialize();
 
   await initDb();
+  await meetingBloc.createMeeting(Meeting(
+    start: Instant.now().add(Time(hours: 1)),
+    participantUsernames: {'JonasWanke'},
+  ));
 
   final nextMeeting = await meetingBloc.getNextMeeting().first;
   logger.i(json.encode(nextMeeting.toJson()));
 
   final token = Platform.environment['TELEGRAM_BOT_TOKEN'];
-  final teledart = TeleDart(Telegram(token), Event());
+  teledart = TeleDart(Telegram(token), Event());
+  telegram = teledart.telegram;
   // teledart.telegram.sendMessage(_mobileDevGroupChatId, 'Hey MobileDev-Club :)');
 
   final bot = await teledart.start();
-  final botName = bot.username;
+  botName = bot.username;
 
-  _sendMeetingAnnouncement(teledart, await meetingBloc.getNextMeeting().first);
+  sendMeetingAnnouncement(await meetingBloc.getNextMeeting().first);
   teledart.onCallbackQuery().listen((callback) {
-    if (callback.data == _callbackMeetingCantParticipate) {
+    if (callback.data == ButtonCallbacks.changeAttendance) {
       logger.i("@${callback.from.username} won't participate :/");
     }
   });
@@ -65,108 +77,44 @@ void main() async {
 
   teledart.onMessage(entityType: '*').listen((message) {
     for (final newMember in message.new_chat_members ?? <User>[]) {
-      _handleNewGroupMember(teledart, message, botName, newMember);
+      _handleNewGroupMember(message, newMember);
     }
   });
 
   // The user started the bot privately.
-  teledart
-      .onCommand('start')
-      .onlyInPrivateChats(teledart, botName)
-      .listen((message) => _handleStartCommand(teledart, message));
+  teledart.onCommand('start').onlyInPrivateChats().listen(_handleStartCommand);
 
   // The user entered a `/missing` command.
   teledart
       .onCommand('missing')
-      .onlyInPrivateChats(teledart, botName)
-      .listen((message) => _handleMissingCommand(teledart, message));
+      .onlyInPrivateChats()
+      .listen(_handleMissingCommand);
 
   return;
 }
 
-// Because we can't initiate private chats with users, we welcome the user in
-// the group and encourage him/her to text the bot privately.
-void _onUserJoined(TeleDart teledart, User user) {
-  // teledart.telegram.sendMessage(user., 'Welcome to the MobileDev club!');
-
-  // teledart.onCommand('missing')
-  //   .listen((message) => teledart.replyMessage(message, "What a pity. But I'll remember that."));
-}
-
-const _callbackMeetingCantParticipate = 'meeting_cantParticipate';
-void _sendMeetingAnnouncement(
-  TeleDart teledart,
-  Meeting meeting,
-) async {
-  final _meetingTimePattern = LocalDateTimePattern.createWithCulture(
-    'ddd., d.MMM, H:mm "Uhr"',
-    await Cultures.getCulture('de-DE'),
-  );
-
-  final time = meeting.start
-      .inZone(await DateTimeZoneProviders.defaultProvider
-          .getZoneOrNull('Europe/Berlin'))
-      .localDateTime;
-
-  final participants = meeting.participantUsernames.isEmpty
-      ? '👻 *cricket noise*'
-      : [
-          for (final participant in meeting.participantUsernames.sorted())
-            // (await teledart.telegram.getChat(_mobileDevGroupChatId)).
-            '\n• @$participant',
-        ].join();
-
-  await teledart.telegram.sendMessage(
-    _mobileDevGroupChatId,
-    '''
-Next meeting: ${_meetingTimePattern.format(time)}\n
-Participants: $participants
-'''
-        .trim(),
-    reply_markup: InlineKeyboardMarkup(
-      inline_keyboard: [
-        [
-          InlineKeyboardButton(
-            text: "I can't participate 😢",
-            callback_data: _callbackMeetingCantParticipate,
-          ),
-        ],
-      ],
-    ),
-  );
-}
-
-/// Because we can't initiate private chats with users, we welcome new users in
-/// the group and encourage them to text us privately.
-void _handleNewGroupMember(
-    TeleDart teledart, Message message, String botName, User newMember) async {
+/// A new user joined the group.
+void _handleNewGroupMember(Message message, User newMember) async {
   logger.i('A new user joined a chat.');
-  await teledart.telegram.sendMessage(
-    message.chat.id,
-    'Hi, ${newMember.first_name}! Welcome to the MobileDev club! 🐰🥚\n'
-    'Please text me privately at @$botName.',
-  );
+  await welcomeNewMemberInGroup(newMember);
 }
 
-/// Handles a user initiating a conversation with us. Only called in private
-/// chats.
-void _handleStartCommand(TeleDart teledart, Message message) async {
-  await teledart.telegram.sendMessage(message.chat.id,
-      'Hi there! TODO: I should tell you something about my commands.');
+/// A user sent `/start` in a private chat.
+void _handleStartCommand(Message message) async {
+  // TODO(marcelgarus): Remember that the user `message.from.id` has private chat `message.chat.id` with us.
+  await welcomeNewMemberPrivately(message.from);
 }
 
-/// The user entered the `/missing` command to indicate they will miss the next
-/// meeting.
-void _handleMissingCommand(TeleDart teledart, Message message) async {
-  await teledart.telegram
-      .sendMessage(message.chat.id, 'You break my heart! 💔😥');
-  // TODO: remember the user will be missing
+/// A user sent `/missing` in a private chat.
+void _handleMissingCommand(Message message) async {
+  await makeUserFeelBad(message.from);
+  // TODO(marcelgarus): Remember the user will be missing.
 }
 
 // - Anwesenheitsliste
 // - Erinnern fürs nächste Treffen
-// - Essensbestellung samt Countdown
-//   - automatisch Geld anfragen? https://paypal.me/marcelgarus/8,30EUR
-//   - verschiedene Angebotslisten: MobileDev vs. Spiele
-// - Ideensammlung
-// - Help
+// - (Essensbestellung samt Countdown)
+//   - (Automatisch Geld anfragen? https://paypal.me/marcelgarus/8,30EUR)
+//   - (Verschiedene Angebotslisten: MobileDev vs. Spiele)
+// - (Ideensammlung)
+// - Generelle Hilfe über den Bot
