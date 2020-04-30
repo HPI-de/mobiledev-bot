@@ -50,7 +50,7 @@ void main() async {
   final token = Platform.environment['TELEGRAM_BOT_TOKEN'];
   teledart = TeleDart(Telegram(token), Event());
   telegram = teledart.telegram;
-  // teledart.telegram.sendMessage(_mobileDevGroupChatId, 'Hey MobileDev-Club :)');
+  // telegram.sendMessage(_mobileDevGroupChatId, 'Hey MobileDev-Club :)');
 
   final bot = await teledart.start();
   botName = bot.username;

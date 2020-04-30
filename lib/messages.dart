@@ -14,7 +14,7 @@ Future<void> tellUserOffForSpammingTheGroupChat(User user) async {
 // Because we can't initiate private chats with users, we welcome the user in
 // the group and encourage them to text the bot privately.
 Future<void> welcomeNewMemberInGroup(User newMember) async {
-  await teledart.telegram.sendMessage(
+  await telegram.sendMessage(
     mobileDevGroupChatId,
     "Hi, ${newMember.first_name}! I'm thrilled to see you joined the MobileDev "
     "club! 🐰🥚 Do you mind texting me privately at @$botName? I'd love to "
@@ -23,7 +23,7 @@ Future<void> welcomeNewMemberInGroup(User newMember) async {
 }
 
 Future<void> welcomeNewMemberPrivately(User newMember) async {
-  await teledart.telegram.sendMessage(
+  await telegram.sendMessage(
     mobileDevGroupChatId, // TODO(marcelgarus): Look up chat id by user.
     "Nice! 😊 So, you're probably wondering why I exist… Basically, I take "
     'care about announcing the meetings and taking notes of who will '
@@ -33,7 +33,7 @@ Future<void> welcomeNewMemberPrivately(User newMember) async {
 }
 
 Future<void> makeUserFeelBad(User user) async {
-  await teledart.telegram.sendMessage(
+  await telegram.sendMessage(
     mobileDevGroupChatId, // TODO(marcelgarus): Look up chat id by user.
     'You break my heart! 💔😥',
   );
@@ -54,11 +54,11 @@ void sendMeetingAnnouncement(Meeting meeting) async {
       ? '👻 *cricket noise*'
       : [
           for (final participant in meeting.participantUsernames.sorted())
-            // (await teledart.telegram.getChat(_mobileDevGroupChatId)).
+            // (await telegram.getChat(_mobileDevGroupChatId)).
             '\n• @$participant',
         ].join();
 
-  await teledart.telegram.sendMessage(
+  await telegram.sendMessage(
     mobileDevGroupChatId,
     '''
 Next meeting: ${_meetingTimePattern.format(time)}\n
