@@ -107,7 +107,8 @@ void _handleStartCommand(Message message) async {
 /// A user sent `/missing` in a private chat.
 void _handleMissingCommand(Message message) async {
   await makeUserFeelBad(message.from);
-  // TODO(marcelgarus): Remember the user will be missing.
+  final nextMeeting = await meetingBloc.getNextMeeting().first;
+  await meetingBloc.removeParticipant(nextMeeting.id, message.from.username);
 }
 
 // - Anwesenheitsliste
