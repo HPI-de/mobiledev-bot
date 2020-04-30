@@ -49,20 +49,28 @@ class Member {
   const Member(
     this.id, {
     this.username,
+    this.name,
+    this.privateChatId,
   }) : assert(id != null);
 
   Member.fromJson(int id, Map<String, dynamic> json)
       : this(
           id,
           username: json['username'],
+          name: json['name'],
+          privateChatId: json['private_chat_id'],
         );
 
   final int id;
   final String username;
+  final String name;
+  final int privateChatId;
 
   Map<String, dynamic> toJson() {
     return {
       'username': username,
+      'name': name,
+      'private_chat_id': privateChatId,
     };
   }
 }
