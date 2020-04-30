@@ -1,22 +1,15 @@
 import 'package:dartx/dartx.dart';
 import 'package:meta/meta.dart';
 import 'package:sembast/sembast.dart';
-import 'package:sembast/sembast_io.dart';
 import 'package:time_machine/time_machine.dart';
 
-const _dbPath = 'db.json';
-Database _db;
-Database get db => _db;
-
-Future<void> initDb() async {
-  _db = await databaseFactoryIo.openDatabase(_dbPath);
-}
+import 'db.dart';
 
 const meetingBloc = MeetingBloc();
 
 @immutable
 class MeetingBloc {
-  const MeetingBloc(); // : _service = const MeetingService();
+  const MeetingBloc();
 
   _MeetingService get _service => const _MeetingService();
 
@@ -68,7 +61,7 @@ class _MeetingService {
   Future<void> createMeeting(Meeting meeting) async {
     assert(meeting != null);
 
-    await _store.record(meeting.id).update(db, meeting.toJson());
+    await _store.record(meeting.id).add(db, meeting.toJson());
   }
 
   Future<void> updateMeeting(Meeting meeting) async {
