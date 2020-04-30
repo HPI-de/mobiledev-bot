@@ -8,7 +8,7 @@ import 'package:teledart/telegram.dart';
 import 'package:time_machine/time_machine.dart';
 import 'package:time_machine/time_machine_text_patterns.dart';
 
-import 'mongo.dart';
+import 'data.dart';
 import 'utils.dart';
 
 const _mobileDevGroupChatId = -421105343;
@@ -32,10 +32,9 @@ extension OnlyInPrivateChats on Stream<Message> {
 void main() async {
   await TimeMachine.initialize();
 
-  final db = MdDb();
-  await db.init();
+  await initDb();
 
-  final nextMeeting = await db.getNextMeeting();
+  final nextMeeting = await meetingBloc.getNextMeeting().first;
   logger.i(json.encode(nextMeeting.toJson()));
 
   final token = Platform.environment['TELEGRAM_BOT_TOKEN'];
@@ -45,7 +44,7 @@ void main() async {
   final bot = await teledart.start();
   final botName = bot.username;
 
-  _sendMeetingAnnouncement(teledart, await db.getNextMeeting());
+  _sendMeetingAnnouncement(teledart, await meetingBloc.getNextMeeting().first);
   teledart.onCallbackQuery().listen((callback) {
     if (callback.data == _callbackMeetingCantParticipate) {
       logger.i("@${callback.from.username} won't participate :/");
@@ -104,7 +103,7 @@ void _sendMeetingAnnouncement(
     await Cultures.getCulture('de-DE'),
   );
 
-  final time = meeting.time
+  final time = meeting.start
       .inZone(await DateTimeZoneProviders.defaultProvider
           .getZoneOrNull('Europe/Berlin'))
       .localDateTime;
