@@ -24,7 +24,7 @@ extension OnlyInPrivateChats on Stream<Message> {
   /// For every emitted [Message], check if we are in a group chat. If we are,
   /// tell the user to instead execute the command in a private chat. Otherwise,
   /// forward the command to the returned [Stream].
-  Stream<Message> onlyInPrivateChats(TeleDart teledart, String botName) async* {
+  Stream<Message> onlyInPrivateChats() async* {
     await for (final message in this) {
       if (message.chat.type == 'group') {
         await teledart.replyMessage(
@@ -73,40 +73,36 @@ void main() async {
 
   teledart.onMessage(entityType: '*').listen((message) {
     for (final newMember in message.new_chat_members ?? <User>[]) {
-      _handleNewGroupMember(teledart, message, botName, newMember);
+      _handleNewGroupMember(message, newMember);
     }
   });
 
   // The user started the bot privately.
-  teledart
-      .onCommand('start')
-      .onlyInPrivateChats(teledart, botName)
-      .listen((message) => _handleStartCommand(teledart, message));
+  teledart.onCommand('start').onlyInPrivateChats().listen(_handleStartCommand);
 
   // The user entered a `/missing` command.
   teledart
       .onCommand('missing')
-      .onlyInPrivateChats(teledart, botName)
-      .listen((message) => _handleMissingCommand(teledart, message));
+      .onlyInPrivateChats()
+      .listen(_handleMissingCommand);
 
   return;
 }
 
 /// A new user joined the group.
-void _handleNewGroupMember(
-    TeleDart teledart, Message message, String botName, User newMember) async {
+void _handleNewGroupMember(Message message, User newMember) async {
   logger.i('A new user joined a chat.');
   await welcomeNewMemberInGroup(newMember);
 }
 
 /// A user sent `/start` in a private chat.
-void _handleStartCommand(TeleDart teledart, Message message) async {
+void _handleStartCommand(Message message) async {
   // TODO(marcelgarus): Remember that the user `message.from.id` has private chat `message.chat.id` with us.
   await welcomeNewMemberPrivately(message.from);
 }
 
 /// A user sent `/missing` in a private chat.
-void _handleMissingCommand(TeleDart teledart, Message message) async {
+void _handleMissingCommand(Message message) async {
   await makeUserFeelBad(message.from);
   // TODO(marcelgarus): Remember the user will be missing.
 }
