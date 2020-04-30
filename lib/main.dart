@@ -27,8 +27,7 @@ extension OnlyInPrivateChats on Stream<Message> {
   Stream<Message> onlyInPrivateChats() async* {
     await for (final message in this) {
       if (message.chat.type == 'group') {
-        await teledart.replyMessage(message,
-            'To not spam this group, please send that to me privately at @$botName.');
+        await tellUserOffForSpammingTheGroupChat(message.from);
       } else {
         yield message;
       }

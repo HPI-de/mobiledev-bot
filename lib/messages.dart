@@ -6,6 +6,11 @@ import 'package:time_machine/time_machine_text_patterns.dart';
 import 'data.dart';
 import 'main.dart';
 
+Future<void> tellUserOffForSpammingTheGroupChat(User user) async {
+  await telegram.sendMessage(mobileDevGroupChatId,
+      'To not spam this group, please send that to me privately at @$botName.');
+}
+
 // Because we can't initiate private chats with users, we welcome the user in
 // the group and encourage them to text the bot privately.
 Future<void> welcomeNewMemberInGroup(User newMember) async {
