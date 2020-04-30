@@ -1,11 +1,10 @@
 import 'package:teledart/model.dart';
-import 'package:teledart/teledart.dart';
 import 'package:time_machine/time_machine.dart';
 import 'package:dartx/dartx.dart';
 import 'package:time_machine/time_machine_text_patterns.dart';
 
+import 'data.dart';
 import 'main.dart';
-import 'mongo.dart';
 
 // Because we can't initiate private chats with users, we welcome the user in
 // the group and encourage them to text the bot privately.
@@ -18,26 +17,26 @@ Future<void> welcomeNewMemberInGroup(User newMember) async {
 }
 
 Future<void> welcomeNewMemberPrivately(User newMember) async {
-  // TODO(marcelgarus): Look up chat id by user.
   await teledart.telegram.sendMessage(
-      chatId, 'Hi there! TODO: I should tell you something about my commands.');
+    mobileDevGroupChatId, // TODO(marcelgarus): Look up chat id by user.
+    'Hi there! TODO: I should tell you something about my commands.',
+  );
 }
 
 Future<void> makeUserFeelBad(User user) async {
-  // TODO(marcelgarus): Look up chat id by user.
-  await teledart.telegram.sendMessage(chatId, 'You break my heart! 💔😥');
+  await teledart.telegram.sendMessage(
+    mobileDevGroupChatId, // TODO(marcelgarus): Look up chat id by user.
+    'You break my heart! 💔😥',
+  );
 }
 
-void sendMeetingAnnouncement(
-  TeleDart teledart,
-  Meeting meeting,
-) async {
+void sendMeetingAnnouncement(Meeting meeting) async {
   final _meetingTimePattern = LocalDateTimePattern.createWithCulture(
     'ddd., d.MMM, H:mm "Uhr"',
     await Cultures.getCulture('de-DE'),
   );
 
-  final time = meeting.time
+  final time = meeting.start
       .inZone(await DateTimeZoneProviders.defaultProvider
           .getZoneOrNull('Europe/Berlin'))
       .localDateTime;
