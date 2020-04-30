@@ -1,3 +1,4 @@
+import 'package:hpi_mobiledev_bot/utils.dart';
 import 'package:teledart/model.dart';
 import 'package:time_machine/time_machine.dart';
 import 'package:dartx/dartx.dart';
@@ -6,7 +7,22 @@ import 'package:time_machine/time_machine_text_patterns.dart';
 import 'data.dart';
 import 'main.dart';
 
+const groupSpamMemes = [
+  'https://lh3.googleusercontent.com/proxy/PZtN-h6JqhKh4YMmKbXOE2Xz1u-vsSQun34AGarGqkxo95yGHfo6nif28bwZ15KgXjL5_qOfxiNmrUF-JrjvzmpvkzfwCnnUaasvIcLDMHd_o4vu0Y-xw_Yngr13vMsdOFkOdQvjegyX0y1dSxHEVAVTk0tUPyMK14I',
+  'https://media.makeameme.org/created/when-people-spam.jpg',
+];
+
+const sadPuppies = [
+  'https://www.dailydot.com/wp-content/uploads/c39/18/3a8988f1f6257a137709c800dfd83d4d-1024x512.jpg',
+  'https://media.breitbart.com/media/2015/04/enhanced-buzz-wide-6382-1329860109-8-640x427.jpg',
+  'https://media.npr.org/assets/img/2015/08/21/istock_000010838061_large_sq-80d63c66ead97de497285063d92809553dcd16a7-s800-c85.jpg',
+  'https://vignette3.wikia.nocookie.net/animaljam/images/6/6b/Sad_puppy.png/revision/latest?cb=20130806142646',
+  'https://ququ-media.com/wp-content/uploads/2016/12/sad-puppy-wallpaper.jpg',
+  'https://pbs.twimg.com/media/CEHMiIhVAAEnSwE.jpg',
+];
+
 Future<void> tellUserOffForSpammingTheGroupChat(User user) async {
+  await telegram.sendPhoto(mobileDevGroupChatId, random(groupSpamMemes));
   await telegram.sendMessage(mobileDevGroupChatId,
       'To not spam this group, please send that to me privately at @$botName.');
 }
@@ -35,7 +51,11 @@ Future<void> welcomeNewMemberPrivately(User newMember) async {
 Future<void> makeUserFeelBad(User user) async {
   await telegram.sendMessage(
     mobileDevGroupChatId, // TODO(marcelgarus): Look up chat id by user.
-    'You break my heart! 💔😥',
+    "You break my heart! 💔😥\nI'm so sad! Here's a picture of a sad puppy:",
+  );
+  await telegram.sendPhoto(
+    mobileDevGroupChatId, // TODO(marcelgarus): Look up chat id by user.
+    random(sadPuppies),
   );
 }
 
