@@ -61,7 +61,7 @@ class _MemberService {
   Future<void> createMember(Member member) async {
     assert(member != null);
 
-    await _store.record(member.id).update(db, member.toJson());
+    await _store.record(member.id).add(db, member.toJson());
   }
 
   Future<void> updateMember(Member member) async {
