@@ -51,11 +51,22 @@ Future<void> welcomeNewMemberPrivately(User newMember) async {
 Future<void> makeUserFeelBad(User user) async {
   await telegram.sendMessage(
     mobileDevGroupChatId, // TODO(marcelgarus): Look up chat id by user.
-    "You break my heart! 💔😥\nI'm so sad! Here's a picture of a sad puppy:",
+    'You break my heart! 💔😥\nTo make you feel bad, please look at this '
+    'picture of a sad puppy for 5 seconds and regret your decision:',
   );
   await telegram.sendPhoto(
     mobileDevGroupChatId, // TODO(marcelgarus): Look up chat id by user.
     random(sadPuppies),
+    reply_markup: InlineKeyboardMarkup(
+      inline_keyboard: [
+        [
+          InlineKeyboardButton(
+            text: "I regret my decision — I'll come",
+            callback_data: ButtonCallbacks.changeAttendance,
+          ),
+        ],
+      ],
+    ),
   );
 }
 

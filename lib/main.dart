@@ -55,18 +55,6 @@ void main() async {
   botName = bot.username;
 
   sendMeetingAnnouncement(await meetingBloc.getNextMeeting().first);
-  teledart.onCallbackQuery().listen((callback) {
-    if (callback.data == ButtonCallbacks.changeAttendance) {
-      logger.i("@${callback.from.username} won't participate :/");
-    }
-  });
-
-  // teledart
-  //     .onMessage(entityType: 'bot_command', keyword: 'start')
-  //     .listen((message) {
-  //   logger.i(message.chat.id);
-  //   return teledart.telegram.sendMessage(message.chat.id, 'Hello TeleDart!');
-  // });
 
   // TODO(JonasWanke): Do this once on startup or only on request.
   // teledart.onMessage(entityType: '*').listen((message) {
@@ -79,6 +67,18 @@ void main() async {
     }
   });
 
+  teledart.onCallbackQuery().listen((callback) async {
+    if (callback.data == ButtonCallbacks.changeAttendance) {
+      final user = callback.message.from;
+      final nextMeeting = await meetingBloc.getNextMeeting().first;
+      if (nextMeeting.participantUsernames.contains(user.username)) {
+        _handleUserWillBeMissing(user);
+      } else {
+        _handleUserWillBeMissing(user);
+      }
+    }
+  });
+
   // The user started the bot privately.
   teledart.onCommand('start').onlyInPrivateChats().listen(_handleStartCommand);
 
@@ -86,7 +86,13 @@ void main() async {
   teledart
       .onCommand('missing')
       .onlyInPrivateChats()
-      .listen(_handleMissingCommand);
+      .listen((message) => _handleUserWillBeMissing(message.from));
+
+  // The user entered a `/coming` command.
+  teledart
+      .onCommand('coming')
+      .onlyInPrivateChats()
+      .listen((message) => _handleUserWillBeComing(message.from));
 
   return;
 }
@@ -103,11 +109,19 @@ void _handleStartCommand(Message message) async {
   await welcomeNewMemberPrivately(message.from);
 }
 
-/// A user sent `/missing` in a private chat.
-void _handleMissingCommand(Message message) async {
-  await makeUserFeelBad(message.from);
+/// A user will be coming to the next meeting.
+void _handleUserWillBeComing(User user) async {
+  logger.i('@${user.username} will participate :/');
   final nextMeeting = await meetingBloc.getNextMeeting().first;
-  await meetingBloc.removeParticipant(nextMeeting.id, message.from.username);
+  await meetingBloc.addParticipant(nextMeeting.id, user.username);
+}
+
+/// A user will be absent from the next meeting.
+void _handleUserWillBeMissing(User user) async {
+  logger.i("@${user.username} won't participate :/");
+  await makeUserFeelBad(user);
+  final nextMeeting = await meetingBloc.getNextMeeting().first;
+  await meetingBloc.removeParticipant(nextMeeting.id, user.username);
 }
 
 // - Anwesenheitsliste
