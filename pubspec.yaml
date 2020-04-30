@@ -8,7 +8,7 @@ dependencies:
   dartx: ^0.3.0
   logger: ^0.8.3
   meta: ^1.1.8
-  mongo_dart: ^0.4.0
+  sembast: ^2.4.3
   teledart: ^0.0.39
   time_machine: ^0.9.12
 

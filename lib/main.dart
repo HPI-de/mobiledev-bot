@@ -8,11 +8,13 @@ import 'package:teledart/teledart.dart';
 import 'package:teledart/telegram.dart';
 import 'package:time_machine/time_machine.dart';
 
-import 'mongo.dart';
+import 'data.dart';
 import 'utils.dart';
 
 const mobileDevGroupChatId = -421105343;
 String botName;
+TeleDart teledart;
+Telegram telegram;
 
 abstract class ButtonCallbacks {
   static const changeAttendance = 'change_attendance';
@@ -37,20 +39,20 @@ extension OnlyInPrivateChats on Stream<Message> {
 void main() async {
   await TimeMachine.initialize();
 
-  final db = MdDb();
-  await db.init();
+  await initDb();
 
-  final nextMeeting = await db.getNextMeeting();
+  final nextMeeting = await meetingBloc.getNextMeeting().first;
   logger.i(json.encode(nextMeeting.toJson()));
 
   final token = Platform.environment['TELEGRAM_BOT_TOKEN'];
-  final teledart = TeleDart(Telegram(token), Event());
+  teledart = TeleDart(Telegram(token), Event());
+  telegram = teledart.telegram;
   // teledart.telegram.sendMessage(_mobileDevGroupChatId, 'Hey MobileDev-Club :)');
 
   final bot = await teledart.start();
   botName = bot.username;
 
-  sendMeetingAnnouncement(teledart, await db.getNextMeeting());
+  sendMeetingAnnouncement(await meetingBloc.getNextMeeting().first);
   teledart.onCallbackQuery().listen((callback) {
     if (callback.data == ButtonCallbacks.changeAttendance) {
       logger.i("@${callback.from.username} won't participate :/");

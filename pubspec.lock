@@ -36,13 +36,6 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "2.0.0"
-  bson:
-    dependency: transitive
-    description:
-      name: bson
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "0.3.2"
   characters:
     dependency: transitive
     description:
@@ -99,13 +92,6 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "0.3.0"
-  fixnum:
-    dependency: transitive
-    description:
-      name: fixnum
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "0.10.11"
   glob:
     dependency: transitive
     description:
@@ -197,27 +183,6 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "0.9.6+3"
-  mongo_dart:
-    dependency: "direct main"
-    description:
-      name: mongo_dart
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "0.4.0"
-  mongo_dart_query:
-    dependency: transitive
-    description:
-      name: mongo_dart_query
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "0.4.1"
-  more:
-    dependency: transitive
-    description:
-      name: more
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "1.18.2"
   multi_server_socket:
     dependency: transitive
     description:
@@ -288,6 +253,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "2.1.6"
+  sembast:
+    dependency: "direct main"
+    description:
+      name: sembast
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "2.4.3"
   shelf:
     dependency: transitive
     description:
@@ -358,6 +330,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.0.5"
+  synchronized:
+    dependency: transitive
+    description:
+      name: synchronized
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "2.2.0"
   teledart:
     dependency: "direct main"
     description:
@@ -414,13 +393,6 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.1.6"
-  uuid:
-    dependency: transitive
-    description:
-      name: uuid
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "2.0.4"
   vm_service:
     dependency: transitive
     description:
