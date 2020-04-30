@@ -40,7 +40,7 @@ void main() async {
   await initDb();
   await meetingBloc.createMeeting(Meeting(
     start: Instant.now().add(Time(hours: 1)),
-    participantUsernames: {'JonasWanke'},
+    participantIds: {171455652},
   ));
 
   final nextMeeting = await meetingBloc.getNextMeeting().first;
