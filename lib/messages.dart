@@ -4,7 +4,7 @@ import 'package:time_machine/time_machine.dart';
 import 'package:dartx/dartx.dart';
 import 'package:time_machine/time_machine_text_patterns.dart';
 
-import 'data.dart';
+import 'data/data.dart';
 import 'main.dart';
 
 const groupSpamMemes = [

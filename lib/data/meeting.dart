@@ -1,16 +1,9 @@
 import 'package:dartx/dartx.dart';
 import 'package:meta/meta.dart';
 import 'package:sembast/sembast.dart';
-import 'package:sembast/sembast_io.dart';
 import 'package:time_machine/time_machine.dart';
 
-const _dbPath = 'db.json';
-Database _db;
-Database get db => _db;
-
-Future<void> initDb() async {
-  _db = await databaseFactoryIo.openDatabase(_dbPath);
-}
+import 'db.dart';
 
 const meetingBloc = MeetingBloc();
 

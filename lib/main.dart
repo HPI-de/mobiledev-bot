@@ -1,14 +1,13 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:dartx/dartx.dart';
 import 'package:hpi_mobiledev_bot/messages.dart';
 import 'package:teledart/model.dart';
 import 'package:teledart/teledart.dart';
 import 'package:teledart/telegram.dart';
 import 'package:time_machine/time_machine.dart';
 
-import 'data.dart';
+import 'data/data.dart';
 import 'utils.dart';
 
 const mobileDevGroupChatId = -421105343;
