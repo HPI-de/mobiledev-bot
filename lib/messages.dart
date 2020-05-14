@@ -23,6 +23,11 @@ const sadPuppies = [
   'https://pbs.twimg.com/media/CEHMiIhVAAEnSwE.jpg',
 ];
 
+Future<void> sendChatId(Message message) async {
+  await telegram.sendMessage(message.chat.id,
+      'The Telegram chat id of this chat is ${message.chat.id}.');
+}
+
 Future<void> tellUserOffForSpammingTheGroupChat(User user) async {
   await telegram.sendPhoto(mobileDevGroupChatId, random(groupSpamMemes));
   await telegram.sendMessage(mobileDevGroupChatId,

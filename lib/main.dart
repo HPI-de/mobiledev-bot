@@ -92,6 +92,9 @@ void main() async {
     }
   });
 
+  // If `/chatid` is sent, answer with the current chat id.
+  teledart.onCommand('chatid').listen(sendChatId);
+
   // The user started the bot privately.
   teledart.onCommand('start').onlyInPrivateChats().listen(_handleStartCommand);
 
