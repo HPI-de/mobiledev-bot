@@ -15,10 +15,18 @@ class MeetingBloc {
 
   _MeetingService get _service => const _MeetingService();
 
-  Stream<Meeting> getNextMeeting() => _service.getNextMeeting();
-  Future<void> createMeeting(Meeting meeting) =>
-      _service.createMeeting(meeting);
+  /// Returns a stream of the next meeting. If no next meeting exists, may
+  /// contain `null`.
+  Stream<Meeting> getNextStream() => _service.getNextMeeting();
 
+  /// Returns the next meeting or `null` if it doesn't exist.
+  // TODO(marcelgarus): Is this the case or does it simply never complete when no meeting exists?
+  Future<Meeting> getNext() => getNextStream().first;
+
+  /// Creates a new meeting.
+  Future<void> create(Meeting meeting) => _service.createMeeting(meeting);
+
+  /// Adds a participant to the meeting with the given id.
   Future<Meeting> addParticipant(int meetingId, int participantId) {
     return _update(
       meetingId,
@@ -28,6 +36,7 @@ class MeetingBloc {
     );
   }
 
+  /// Removes a participant from the meeting with the given id.
   Future<Meeting> removeParticipant(int meetingId, int participantId) {
     return _update(
       meetingId,
@@ -37,6 +46,7 @@ class MeetingBloc {
     );
   }
 
+  /// Saves the id of the message for a certain meeting.
   Future<Meeting> saveMessageId(int meetingId, int messageId) {
     return _update(
       meetingId,
@@ -44,6 +54,7 @@ class MeetingBloc {
     );
   }
 
+  /// Updates a meeting.
   Future<Meeting> _update(int meetingId, _Updater<Meeting> updater) async {
     final oldMeeting = await _service.getMeeting(meetingId).first;
     final newMeeting = updater(oldMeeting);

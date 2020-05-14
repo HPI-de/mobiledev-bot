@@ -101,7 +101,7 @@ void sendMeetingAnnouncement(Meeting meeting) async {
   await meetingBloc.saveMessageId(meeting.id, message.message_id);
 
   StreamSubscription<Meeting> subscription;
-  subscription = meetingBloc.getNextMeeting().listen((meeting) async {
+  subscription = meetingBloc.getNextStream().listen((meeting) async {
     final isOver = meeting.start.inLocalZone().localDateTime.calendarDate <
         LocalDate.today();
     try {
@@ -148,7 +148,7 @@ Future<String> _meetingAnnouncementText(Meeting meeting) async {
 }
 
 Future<String> _getParticipantText(int userId) async {
-  final member = await memberBloc.getMember(userId).first;
+  final member = await memberBloc.getStream(userId).first;
   if (member == null) {
     return 'Unknown member with id $userId';
   }
