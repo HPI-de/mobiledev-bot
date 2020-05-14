@@ -42,7 +42,7 @@ Future<void> welcomeNewMemberInGroup(User newMember) async {
 
 Future<void> welcomeNewMemberPrivately(Member member) async {
   await telegram.sendMessage(
-    member.privateChatId,
+    member.id,
     "Nice! 😊 So, you're probably wondering why I exist… Basically, I take "
     'care about announcing the meetings and taking notes of who will '
     "participate. If for some reason, you'll miss a meeting, just text "
@@ -53,12 +53,12 @@ Future<void> welcomeNewMemberPrivately(Member member) async {
 Future<void> makeMemberFeelBad(Member member) async {
   try {
     await telegram.sendMessage(
-      member.privateChatId,
+      member.id,
       'You break my heart! 💔😥\nTo make you feel bad, please look at this '
       'picture of a sad puppy for 5 seconds:',
     );
     await telegram.sendPhoto(
-      member.privateChatId,
+      member.id,
       random(sadPuppies),
       reply_markup: InlineKeyboardMarkup(
         inline_keyboard: [
@@ -73,8 +73,9 @@ Future<void> makeMemberFeelBad(Member member) async {
     );
   } on HttpClientException catch (e) {
     if (e.cause.contains('chat not found')) {
-      logger.w('Making user ${member.name} feel bad did not work because I '
-          'could not text them privately.');
+      logger.w('Making user ${member.name} with id ${member.id} feel bad '
+          "didn't work because I couldn't text them privately. Here's the "
+          'exception: $e');
       // The private chat id of the user is invalid. Either the user didn't text
       // us privately yet or blocked us or something.
     }

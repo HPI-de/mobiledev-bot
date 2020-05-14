@@ -35,7 +35,6 @@ class MemberBloc {
       final updated = previous.copyWith(
         username: member.username,
         name: member.name,
-        privateChatId: member.privateChatId,
       );
       await _service.update(updated);
     }
@@ -82,7 +81,6 @@ class Member {
     this.id, {
     this.username,
     this.name,
-    this.privateChatId,
   }) : assert(id != null);
 
   Member.fromJson(int id, Map<String, dynamic> json)
@@ -90,7 +88,6 @@ class Member {
           id,
           username: json['username'],
           name: json['name'],
-          privateChatId: json['privateChatId'],
         );
 
   Member.fromUser(User user)
@@ -101,17 +98,11 @@ class Member {
           message.from.id,
           username: message.from.username,
           name: message.from.first_name,
-          // If the message got sent in the MobileDev group, we ignore it.
-          // Otherwise, we assume it got sent privately and we save the chat id
-          // as the user's private chat id.
-          privateChatId:
-              message.chat.id == mobileDevGroupChatId ? null : message.chat.id,
         );
 
   final int id;
   final String username;
   final String name;
-  final int privateChatId;
 
   Member copyWith({
     String username,
@@ -122,7 +113,6 @@ class Member {
       id,
       username: username ?? this.username,
       name: name ?? this.name,
-      privateChatId: privateChatId ?? this.privateChatId,
     );
   }
 
@@ -130,7 +120,6 @@ class Member {
     return {
       'username': username,
       'name': name,
-      'privateChatId': privateChatId,
     };
   }
 }
