@@ -11,7 +11,7 @@ import 'data/data.dart';
 import 'data/emotional_attachment.dart';
 import 'utils.dart';
 
-const mobileDevGroupChatId = -421105343;
+const mobileDevGroupChatId = -1001333237324;
 String botName;
 TeleDart teledart;
 Telegram telegram;
@@ -23,14 +23,16 @@ abstract class ButtonCallbacks {
   static const setEmotionalAttachment = 'emotional_attachment=';
 }
 
-extension OnlyInPrivateChats on Stream<Message> {
+extension OnlyInPrivateMemberChats on Stream<Message> {
   /// For every emitted [Message], check if we are in a group chat. If we are,
   /// tell the user to instead execute the command in a private chat. Otherwise,
   /// forward the command to the returned [Stream].
-  Stream<Message> onlyInPrivateChats() async* {
+  Stream<Message> onlyInPrivateMemberChats(MemberBloc memberBloc) async* {
     await for (final message in this) {
       if (message.chat.type == 'group') {
         await tellUserOffForSpammingTheGroupChat(message.from);
+      } else if (!await memberBloc.doesExist(message.from.id)) {
+        await rejectTalkingToStranger(message);
       } else {
         yield message;
       }
@@ -67,7 +69,12 @@ void main() async {
       // Something is happening inside the MobileDev group chat!
 
       // If new members join, we welcome them.
-      (message.new_chat_members ?? <User>[]).forEach(_handleNewGroupMember);
+      (message.new_chat_members ?? <User>[]).forEach(_handleUserJoining);
+
+      // If old members leave, we forget them.
+      if (message.left_chat_member != null) {
+        _handleUserLeaving(message.left_chat_member);
+      }
 
       // Otherwise, we check from whom the message originated and update them.
       // This message appeared in the group chat, so we're sure that they are a
@@ -103,37 +110,47 @@ void main() async {
   teledart.onCommand('chatid').listen(sendChatId);
 
   // The user started the bot privately.
-  teledart.onCommand('start').onlyInPrivateChats().listen(_handleStartCommand);
+  teledart
+      .onCommand('start')
+      .onlyInPrivateMemberChats(memberBloc)
+      .listen(_handleStartCommand);
 
   // The user entered a `/missing` command.
   teledart
       .onCommand('missing')
-      .onlyInPrivateChats()
+      .onlyInPrivateMemberChats(memberBloc)
       .listen((message) => _handleUserWillBeMissing(message.from));
 
   // The user entered a `/coming` command.
   teledart
       .onCommand('coming')
-      .onlyInPrivateChats()
+      .onlyInPrivateMemberChats(memberBloc)
       .listen((message) => _handleUserWillBeComing(message.from));
 
   return;
 }
 
 /// A new user joined the group.
-void _handleNewGroupMember(User newMember) async {
+void _handleUserJoining(User user) async {
   logger.i('A new user joined a chat.');
-  await memberBloc.update(Member.fromUser(newMember));
-  await welcomeNewMemberInGroup(newMember);
+  await memberBloc.update(Member.fromUser(user));
+  await welcomeNewMemberInGroup(user);
+}
+
+void _handleUserLeaving(User user) async {
+  logger.i('User $user left the chat.');
+  await memberBloc.delete(Member.fromUser(user));
 }
 
 /// A user sent `/start` in a private chat.
 void _handleStartCommand(Message message) async {
-  final member = Member.fromMessage(message);
-  if (!await memberBloc.doesExist(member.id)) {
+  final member = Member.fromUser(message.from);
+  if (await memberBloc.doesExist(member.id)) {
     await welcomeNewMemberPrivately(member);
+    await memberBloc.update(member);
+  } else {
+    await rejectTalkingToStranger(message);
   }
-  await memberBloc.update(member);
 }
 
 /// A user will be coming to the next meeting.

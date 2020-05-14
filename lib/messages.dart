@@ -26,6 +26,28 @@ Future<void> tellUserOffForSpammingTheGroupChat(User user) async {
       'To not spam this group, please send that to me privately at @$botName.');
 }
 
+// The user is not in the MobileDev group (or, at least hasn't been active in
+// the group since the database was created). It may be that a random person
+// using Telegram found the bot handle and started talking to us. Tell them to
+// text something in the group to prove they're a MobileDev member, then come
+// back again.
+Future<void> rejectTalkingToStranger(Message message) async {
+  await telegram.sendMessage(
+    message.chat.id,
+    "Oh, hi! 👋🏻 I haven't seen you in the MobileDev group yet, probably "
+    "because you weren't active since I joined. If you are indeed in the "
+    'MobileDev club, please be so kind to text somthing in the group (random '
+    'stuff like "blub" is alright) and then come back and talk to me again ☺️\n'
+    "If you're a student from the HPI and you're thinking about joining the "
+    "MobileDev club or just have a few questions, don't hesitate to text "
+    "@marcelgarus or @JonasWanke — they don't bite 😁\n"
+    "If you're a random person who found my Telegram handle: I'm the MobileDev "
+    'bot created by some students from the HPI (www.hpi.de) and my job is to '
+    "announce their weekly meetings and figure out who's coming. If you start "
+    "studying at the HPI, you're welcome to join! 👀",
+  );
+}
+
 // Because we can't initiate private chats with users, we welcome the user in
 // the group and encourage them to text the bot privately.
 Future<void> welcomeNewMemberInGroup(User newMember) async {
@@ -48,15 +70,16 @@ Future<void> welcomeNewMemberPrivately(Member member) async {
 }
 
 Future<void> makeMemberFeelBad(Member member) async {
+  final emotionalAttachment = member.emotionalAttachment ?? dogs;
   try {
     await telegram.sendMessage(
       member.id,
       'You break my heart! 💔😥\nTo make you feel bad, please look at this '
-      'picture of a sad ${member.emotionalAttachment.singularName} for 5 seconds:',
+      'picture of a sad ${emotionalAttachment.singularName} for 5 seconds:',
     );
     await telegram.sendPhoto(
       member.id,
-      (member.emotionalAttachment ?? dogs).randomSad(),
+      emotionalAttachment.randomSad(),
       reply_markup: InlineKeyboardMarkup(
         inline_keyboard: [
           [

@@ -38,6 +38,10 @@ class MemberBloc {
       await _service.update(updated);
     }
   }
+
+  Future<void> delete(Member member) async {
+    await _service.delete(member);
+  }
 }
 
 @immutable
@@ -62,6 +66,10 @@ class _MemberService {
   Future<void> update(Member member) async {
     await _store.record(member.id).put(db, member.toJson());
   }
+
+  Future<void> delete(Member member) async {
+    await _store.record(member.id).delete(db);
+  }
 }
 
 /// A member of the MobileDev club.
@@ -78,19 +86,13 @@ class Member {
           id,
           username: json['username'],
           name: json['name'],
-          emotionalAttachment:
-              EmotionalAttachment.fromJson(json['emotionalAttachment']),
+          emotionalAttachment: json['emotionalAttachment'] == null
+              ? null
+              : EmotionalAttachment.fromJson(json['emotionalAttachment']),
         );
 
   Member.fromUser(User user)
       : this(user.id, username: user.username, name: user.first_name);
-
-  Member.fromMessage(Message message)
-      : this(
-          message.from.id,
-          username: message.from.username,
-          name: message.from.first_name,
-        );
 
   final int id;
   final String username;
@@ -114,7 +116,7 @@ class Member {
     return {
       'username': username,
       'name': name,
-      'emotionalAttachment': emotionalAttachment.toJson(),
+      'emotionalAttachment': emotionalAttachment?.toJson(),
     };
   }
 }
