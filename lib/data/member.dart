@@ -1,9 +1,7 @@
-import 'package:dartx/dartx.dart';
 import 'package:meta/meta.dart';
 import 'package:sembast/sembast.dart';
 import 'package:teledart/model.dart';
 
-import '../main.dart';
 import 'db.dart';
 
 const memberBloc = MemberBloc();
@@ -39,16 +37,6 @@ class MemberBloc {
       await _service.update(updated);
     }
   }
-
-  // Future<Member> updatePrivateChatId(int memberId, int privateChatId) async {
-  //   if (!await _service.doesMemberExist(memberId)) {
-  //     return null;
-  //   }
-  //   final oldMember = await _service.getMember(memberId).first;
-  //   final newMember = oldMember.copyWith(privateChatId: privateChatId);
-  //   await _service.updateMember(newMember);
-  //   return newMember;
-  // }
 }
 
 @immutable

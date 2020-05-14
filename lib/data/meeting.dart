@@ -7,8 +7,6 @@ import 'db.dart';
 
 const meetingBloc = MeetingBloc();
 
-typedef _Updater<T> = T Function(T oldItem);
-
 @immutable
 class MeetingBloc {
   const MeetingBloc();
@@ -20,7 +18,7 @@ class MeetingBloc {
   Stream<Meeting> getNextStream() => _service.getNextMeeting();
 
   /// Returns the next meeting or `null` if it doesn't exist.
-  // TODO(marcelgarus): Is this the case or does it simply never complete when no meeting exists?
+  // TODO(marcelgarus): Is this true or does it simply never complete when no meeting exists?
   Future<Meeting> getNext() => getNextStream().first;
 
   /// Creates a new meeting.
@@ -55,7 +53,10 @@ class MeetingBloc {
   }
 
   /// Updates a meeting.
-  Future<Meeting> _update(int meetingId, _Updater<Meeting> updater) async {
+  Future<Meeting> _update(
+    int meetingId,
+    Meeting Function(Meeting oldItem) updater,
+  ) async {
     final oldMeeting = await _service.getMeeting(meetingId).first;
     final newMeeting = updater(oldMeeting);
     await _service.updateMeeting(newMeeting);
