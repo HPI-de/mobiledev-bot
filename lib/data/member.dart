@@ -3,6 +3,7 @@ import 'package:sembast/sembast.dart';
 import 'package:teledart/model.dart';
 
 import 'db.dart';
+import 'emotional_attachment.dart';
 
 const memberBloc = MemberBloc();
 
@@ -69,6 +70,7 @@ class Member {
     this.id, {
     this.username,
     this.name,
+    this.emotionalAttachment,
   }) : assert(id != null);
 
   Member.fromJson(int id, Map<String, dynamic> json)
@@ -76,6 +78,8 @@ class Member {
           id,
           username: json['username'],
           name: json['name'],
+          emotionalAttachment:
+              EmotionalAttachment.fromJson(json['emotionalAttachment']),
         );
 
   Member.fromUser(User user)
@@ -91,16 +95,18 @@ class Member {
   final int id;
   final String username;
   final String name;
+  final EmotionalAttachment emotionalAttachment;
 
   Member copyWith({
     String username,
     String name,
-    int privateChatId,
+    EmotionalAttachment emotionalAttachment,
   }) {
     return Member(
       id,
       username: username ?? this.username,
       name: name ?? this.name,
+      emotionalAttachment: emotionalAttachment ?? this.emotionalAttachment,
     );
   }
 
@@ -108,6 +114,7 @@ class Member {
     return {
       'username': username,
       'name': name,
+      'emotionalAttachment': emotionalAttachment.toJson(),
     };
   }
 }

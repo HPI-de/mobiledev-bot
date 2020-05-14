@@ -8,6 +8,7 @@ import 'package:teledart/telegram.dart';
 import 'package:time_machine/time_machine.dart';
 
 import 'data/data.dart';
+import 'data/emotional_attachment.dart';
 import 'utils.dart';
 
 const mobileDevGroupChatId = -421105343;
@@ -17,6 +18,9 @@ Telegram telegram;
 
 abstract class ButtonCallbacks {
   static const changeAttendance = 'change_attendance';
+  // Used to set the emotional attachment. For example, choosing dogs would
+  // become 'emotional_attachment=dogs'.
+  static const setEmotionalAttachment = 'emotional_attachment=';
 }
 
 extension OnlyInPrivateChats on Stream<Message> {
@@ -43,7 +47,7 @@ void main() async {
     participantIds: {171455652},
   ));
 
-  final nextMeeting = await meetingBloc.getNextStream().first;
+  final nextMeeting = await meetingBloc.getNext();
   logger.i(json.encode(nextMeeting.toJson()));
 
   final token = Platform.environment['TELEGRAM_BOT_TOKEN'];
@@ -53,14 +57,11 @@ void main() async {
   final bot = await teledart.start();
   botName = bot.username;
 
-  sendMeetingAnnouncement(await meetingBloc.getNextStream().first);
+  if (nextMeeting.messageId == null) {
+    sendMeetingAnnouncement(nextMeeting);
+  }
 
-  // TODO(JonasWanke): Do this once on startup or only on request.
-  // teledart.onMessage(entityType: '*').listen((message) {
-  //   logger..d(message)..d('Chat ID: ${message.chat.id}');
-  // });
-
-  // Gets invoked when anything happens inside Telegram.
+  // Gets invoked when any message or event gets received.
   teledart.onMessage(entityType: '*').listen((message) {
     if (message.chat.id == mobileDevGroupChatId) {
       // Something is happening inside the MobileDev group chat!
@@ -89,6 +90,12 @@ void main() async {
       } else {
         _handleUserWillBeComing(user);
       }
+    } else if (callback.data
+        .startsWith(ButtonCallbacks.setEmotionalAttachment)) {
+      final attachment = EmotionalAttachment.fromJson(callback.data
+          .substring(ButtonCallbacks.setEmotionalAttachment.length));
+      final member = Member.fromUser(callback.from);
+      await memberBloc.update(member.copyWith(emotionalAttachment: attachment));
     }
   });
 
