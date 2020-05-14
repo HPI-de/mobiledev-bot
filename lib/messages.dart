@@ -11,7 +11,6 @@ import 'data/data.dart';
 import 'main.dart';
 
 const groupSpamMemes = [
-  'https://lh3.googleusercontent.com/proxy/PZtN-h6JqhKh4YMmKbXOE2Xz1u-vsSQun34AGarGqkxo95yGHfo6nif28bwZ15KgXjL5_qOfxiNmrUF-JrjvzmpvkzfwCnnUaasvIcLDMHd_o4vu0Y-xw_Yngr13vMsdOFkOdQvjegyX0y1dSxHEVAVTk0tUPyMK14I',
   'https://media.makeameme.org/created/when-people-spam.jpg',
 ];
 
