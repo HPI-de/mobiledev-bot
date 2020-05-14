@@ -51,25 +51,34 @@ Future<void> welcomeNewMemberPrivately(Member member) async {
 }
 
 Future<void> makeMemberFeelBad(Member member) async {
-  await telegram.sendMessage(
-    member.privateChatId,
-    'You break my heart! 💔😥\nTo make you feel bad, please look at this '
-    'picture of a sad puppy for 5 seconds and regret your decision:',
-  );
-  await telegram.sendPhoto(
-    member.privateChatId,
-    random(sadPuppies),
-    reply_markup: InlineKeyboardMarkup(
-      inline_keyboard: [
-        [
-          InlineKeyboardButton(
-            text: "I regret my decision — I'll come",
-            callback_data: ButtonCallbacks.changeAttendance,
-          ),
+  try {
+    await telegram.sendMessage(
+      member.privateChatId,
+      'You break my heart! 💔😥\nTo make you feel bad, please look at this '
+      'picture of a sad puppy for 5 seconds:',
+    );
+    await telegram.sendPhoto(
+      member.privateChatId,
+      random(sadPuppies),
+      reply_markup: InlineKeyboardMarkup(
+        inline_keyboard: [
+          [
+            InlineKeyboardButton(
+              text: "I regret my decision — I'll come",
+              callback_data: ButtonCallbacks.changeAttendance,
+            ),
+          ],
         ],
-      ],
-    ),
-  );
+      ),
+    );
+  } on HttpClientException catch (e) {
+    if (e.cause.contains('chat not found')) {
+      logger.w('Making user ${member.name} feel bad did not work because I '
+          'could not text them privately.');
+      // The private chat id of the user is invalid. Either the user didn't text
+      // us privately yet or blocked us or something.
+    }
+  }
 }
 
 void sendMeetingAnnouncement(Meeting meeting) async {
