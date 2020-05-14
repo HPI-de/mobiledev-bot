@@ -66,15 +66,28 @@ void main() async {
     for (final newMember in message.new_chat_members ?? <User>[]) {
       _handleNewGroupMember(message, newMember);
     }
+    final user = message.from;
+    if (user != null) {
+      print('Member $user found.');
+      memberBloc.createMember(Member(
+        user.id,
+        username: user.username,
+        name: user.first_name,
+      ));
+    }
   });
 
   teledart.onCallbackQuery().listen((callback) async {
     if (callback.data == ButtonCallbacks.changeAttendance) {
-      final user = callback.message.from;
+      final user = callback.from;
+      // final user = callback.message.from;
       final nextMeeting = await meetingBloc.getNextMeeting().first;
+      print('Participant IDs are ${nextMeeting.participantIds}');
       if (nextMeeting.participantIds.contains(user.id)) {
+        print('User ${user.id} will be missing.');
         _handleUserWillBeMissing(user);
       } else {
+        print('User ${user.id} will be coming.');
         _handleUserWillBeComing(user);
       }
     }
@@ -124,10 +137,13 @@ void _handleUserWillBeComing(User user) async {
   logger.i('@${user.username} will participate :D');
   final member = await _getMemberByUser(user);
   if (member == null) {
+    print("Didn't find member with ID ${user.id}");
     return;
   }
   final nextMeeting = await meetingBloc.getNextMeeting().first;
+  print('Adding participant to meeting.');
   await meetingBloc.addParticipant(nextMeeting.id, member.id);
+  print('Added participant.');
 }
 
 /// A user will be absent from the next meeting.
@@ -144,8 +160,13 @@ void _handleUserWillBeMissing(User user) async {
 
 Future<Member> _getMemberByUser(User user) async {
   if (!await memberBloc.doesMemberExist(user.id)) {
-    logger.e("@${user.username} is in group, but I don't know them yet.");
-    return null;
+    final member = Member(
+      user.id,
+      name: user.first_name,
+      username: user.username,
+    );
+    await memberBloc.createMember(member);
+    return member;
   }
   return memberBloc.getMember(user.id).first;
 }

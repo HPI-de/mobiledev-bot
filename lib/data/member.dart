@@ -43,8 +43,10 @@ class _MemberService {
   static final _store = intMapStoreFactory.store('members');
 
   Future<bool> doesMemberExist(int id) => _store.record(id).exists(db);
-  Stream<Member> getMember(int id) =>
-      _store.record(id).onSnapshot(db).map((s) => Member.fromJson(id, s.value));
+  Stream<Member> getMember(int id) => _store
+      .record(id)
+      .onSnapshot(db)
+      .map((s) => s == null ? null : Member.fromJson(id, s.value));
   Stream<Member> getNextMember() {
     return _store
         .query(
@@ -95,7 +97,7 @@ class Member {
   }) {
     return Member(
       id,
-      privateChatId: this.privateChatId ?? privateChatId,
+      privateChatId: privateChatId ?? this.privateChatId,
     );
   }
 

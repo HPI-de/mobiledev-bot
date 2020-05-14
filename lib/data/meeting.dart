@@ -1,12 +1,13 @@
 import 'package:dartx/dartx.dart';
 import 'package:meta/meta.dart';
 import 'package:sembast/sembast.dart';
-import 'package:teledart/model.dart';
 import 'package:time_machine/time_machine.dart';
 
 import 'db.dart';
 
 const meetingBloc = MeetingBloc();
+
+typedef _Updater<T> = T Function(T oldItem);
 
 @immutable
 class MeetingBloc {
@@ -18,20 +19,34 @@ class MeetingBloc {
   Future<void> createMeeting(Meeting meeting) =>
       _service.createMeeting(meeting);
 
-  Future<Meeting> addParticipant(int meetingId, int participantId) async {
-    final oldMeeting = await _service.getMeeting(meetingId).first;
-    final newMeeting = oldMeeting.copyWith(
-      participantIds: oldMeeting.participantIds.union({participantId}),
+  Future<Meeting> addParticipant(int meetingId, int participantId) {
+    return _update(
+      meetingId,
+      (m) => m.copyWith(
+        participantIds: m.participantIds.union({participantId}),
+      ),
     );
-    await _service.updateMeeting(newMeeting);
-    return newMeeting;
   }
 
-  Future<Meeting> removeParticipant(int meetingId, int participantId) async {
-    final oldMeeting = await _service.getMeeting(meetingId).first;
-    final newMeeting = oldMeeting.copyWith(
-      participantIds: oldMeeting.participantIds.difference({participantId}),
+  Future<Meeting> removeParticipant(int meetingId, int participantId) {
+    return _update(
+      meetingId,
+      (m) => m.copyWith(
+        participantIds: m.participantIds.difference({participantId}),
+      ),
     );
+  }
+
+  Future<Meeting> saveMessageId(int meetingId, int messageId) {
+    return _update(
+      meetingId,
+      (m) => m.copyWith(messageId: messageId),
+    );
+  }
+
+  Future<Meeting> _update(int meetingId, _Updater<Meeting> updater) async {
+    final oldMeeting = await _service.getMeeting(meetingId).first;
+    final newMeeting = updater(oldMeeting);
     await _service.updateMeeting(newMeeting);
     return newMeeting;
   }
@@ -73,6 +88,7 @@ class Meeting {
   const Meeting({
     @required this.start,
     @required this.participantIds,
+    this.messageId,
   })  : assert(start != null),
         assert(participantIds != null);
 
@@ -86,13 +102,16 @@ class Meeting {
   int get id => start.epochSeconds;
   final Instant start;
   final Set<int> participantIds;
+  final int messageId;
 
   Meeting copyWith({
     Set<int> participantIds,
+    int messageId,
   }) {
     return Meeting(
       start: start,
-      participantIds: this.participantIds ?? participantIds,
+      participantIds: participantIds ?? this.participantIds,
+      messageId: messageId ?? this.messageId,
     );
   }
 

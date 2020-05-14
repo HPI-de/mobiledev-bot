@@ -1,7 +1,10 @@
+import 'dart:async';
+
+import 'package:dartx/dartx.dart';
 import 'package:hpi_mobiledev_bot/utils.dart';
 import 'package:teledart/model.dart';
+import 'package:teledart/src/util/http_client.dart' show HttpClientException;
 import 'package:time_machine/time_machine.dart';
-import 'package:dartx/dartx.dart';
 import 'package:time_machine/time_machine_text_patterns.dart';
 
 import 'data/data.dart';
@@ -71,6 +74,49 @@ Future<void> makeMemberFeelBad(Member member) async {
 }
 
 void sendMeetingAnnouncement(Meeting meeting) async {
+  final changeAttendanceKeyboard = InlineKeyboardMarkup(
+    inline_keyboard: [
+      [
+        InlineKeyboardButton(
+          text: 'Change my attendance',
+          callback_data: ButtonCallbacks.changeAttendance,
+        ),
+      ],
+    ],
+  );
+
+  final message = await telegram.sendMessage(
+    mobileDevGroupChatId,
+    await _meetingAnnouncementText(meeting),
+    reply_markup: changeAttendanceKeyboard,
+  );
+  await meetingBloc.saveMessageId(meeting.id, message.message_id);
+
+  StreamSubscription<Meeting> subscription;
+  subscription = meetingBloc.getNextMeeting().listen((meeting) async {
+    final isOver = meeting.start.inLocalZone().localDateTime.calendarDate <
+        LocalDate.today();
+    try {
+      await telegram.editMessageText(
+        await _meetingAnnouncementText(meeting),
+        chat_id: mobileDevGroupChatId,
+        message_id: message.message_id,
+        reply_markup: isOver ? null : changeAttendanceKeyboard,
+      );
+    } on HttpClientException catch (e) {
+      if (e.cause.contains('message is not modified')) {
+        // This is okay.
+      } else {
+        rethrow;
+      }
+    }
+    if (isOver) {
+      await subscription.cancel();
+    }
+  });
+}
+
+Future<String> _meetingAnnouncementText(Meeting meeting) async {
   final _meetingTimePattern = LocalDateTimePattern.createWithCulture(
     'ddd., d. MMM, H:mm "Uhr"',
     await Cultures.getCulture('de-DE'),
@@ -86,25 +132,21 @@ void sendMeetingAnnouncement(Meeting meeting) async {
       : [
           for (final participant in meeting.participantIds.sorted())
             // (await telegram.getChat(_mobileDevGroupChatId)).
-            '\n• @$participant',
+            '\n• ${await _getParticipantText(participant)}',
         ].join();
 
-  await telegram.sendMessage(
-    mobileDevGroupChatId,
-    '''
-Next meeting: ${_meetingTimePattern.format(time)}\n
-Participants: $participants
-'''
-        .trim(),
-    reply_markup: InlineKeyboardMarkup(
-      inline_keyboard: [
-        [
-          InlineKeyboardButton(
-            text: 'Change my attendance',
-            callback_data: ButtonCallbacks.changeAttendance,
-          ),
-        ],
-      ],
-    ),
-  );
+  return 'Next meeting: ${_meetingTimePattern.format(time)}\n'
+      'Participants: $participants';
+}
+
+Future<String> _getParticipantText(int userId) async {
+  final member = await memberBloc.getMember(userId).first;
+  if (member == null) {
+    return 'Unknown member with id $userId';
+  }
+  final buffer = StringBuffer()..write(member.name);
+  if (member.username != null) {
+    buffer.write(' (@${member.username})');
+  }
+  return buffer.toString();
 }
