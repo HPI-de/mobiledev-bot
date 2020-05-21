@@ -44,13 +44,9 @@ void main() async {
   await TimeMachine.initialize();
 
   await initDb();
-  await meetingBloc.create(Meeting(
-    start: Instant.now().add(Time(hours: 1)),
-    participantIds: {171455652},
-  ));
 
-  final nextMeeting = await meetingBloc.getNext();
-  logger.i(json.encode(nextMeeting.toJson()));
+  // final nextMeeting = await meetingBloc.getNext();
+  // logger.i(json.encode(nextMeeting.toJson()));
 
   final token = Platform.environment['TELEGRAM_BOT_TOKEN'];
   teledart = TeleDart(Telegram(token), Event());
@@ -58,6 +54,18 @@ void main() async {
 
   final bot = await teledart.start();
   botName = bot.username;
+
+  await meetingBloc.create(Meeting(
+    start: Instant.now().add(Time(seconds: 10)),
+    end: Instant.now().add(Time(seconds: 30)),
+    participantIds: {171455652},
+  ));
+  await meetingBloc.create(Meeting(
+    start: Instant.now().add(Time(seconds: 50)),
+    end: Instant.now().add(Time(seconds: 110)),
+    participantIds: {171455652},
+  ));
+  sendMeetingAnnouncements();
 
   // Gets invoked when any message or event gets received.
   teledart.onMessage(entityType: '*').listen((message) {
@@ -87,6 +95,9 @@ void main() async {
     if (callback.data == ButtonCallbacks.changeAttendance) {
       final user = callback.from;
       final nextMeeting = await meetingBloc.getNext();
+      if (nextMeeting == null) {
+        return;
+      }
       print('Participant IDs are ${nextMeeting.participantIds}');
       if (nextMeeting.participantIds.contains(user.id)) {
         _handleUserWillBeMissing(user);
