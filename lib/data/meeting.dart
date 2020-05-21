@@ -1,5 +1,6 @@
 import 'package:dartx/dartx.dart';
 import 'package:meta/meta.dart';
+import 'package:rxdart/rxdart.dart';
 import 'package:sembast/sembast.dart';
 import 'package:time_machine/time_machine.dart';
 
@@ -73,15 +74,20 @@ class _MeetingService {
   Stream<Meeting> getMeeting(int id) =>
       _store.record(id).onSnapshot(db).map((s) => Meeting.fromJson(s.value));
   Stream<Meeting> getNextMeeting() {
-    return _store
-        .query(
-          finder: Finder(
-            limit: 1,
-            filter: Filter.greaterThan('start', Instant.now().epochSeconds),
-          ),
-        )
-        .onSnapshots(db)
-        .map((m) => m.firstOrNull)
+    // Returns a stream that contains the latest document from the database.
+    // Because the filter depends on the current time, we also execute the query
+    // every two minutes, so that even if the underlying document in the
+    // database doesn't change, we still get the correct meeting.
+    return Stream<void>.periodic(Duration(minutes: 2))
+        .switchMap((_) => _store
+            .query(
+              finder: Finder(
+                limit: 1,
+                filter: Filter.greaterThan('start', Instant.now().epochSeconds),
+              ),
+            )
+            .onSnapshots(db)
+            .map((m) => m.firstOrNull))
         .map((m) => m == null ? null : Meeting.fromJson(m.value));
   }
 

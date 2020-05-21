@@ -102,7 +102,7 @@ Future<void> makeMemberFeelBad(Member member) async {
   }
 }
 
-void sendMeetingAnnouncement(Meeting meeting) async {
+void sendMeetingAnnouncements(Meeting meeting) async {
   final changeAttendanceKeyboard = InlineKeyboardMarkup(
     inline_keyboard: [
       [
@@ -114,35 +114,44 @@ void sendMeetingAnnouncement(Meeting meeting) async {
     ],
   );
 
-  final message = await telegram.sendMessage(
-    mobileDevGroupChatId,
-    await _meetingAnnouncementText(meeting),
-    reply_markup: changeAttendanceKeyboard,
-  );
-  await meetingBloc.saveMessageId(meeting.id, message.message_id);
+  Meeting previousMeeting;
 
-  StreamSubscription<Meeting> subscription;
-  subscription = meetingBloc.getNextStream().listen((meeting) async {
-    final isOver = meeting.start.inLocalZone().localDateTime.calendarDate <
-        LocalDate.today();
-    try {
-      await telegram.editMessageText(
+  await for (final meeting in meetingBloc.getNextStream()) {
+    if (meeting.id != previousMeeting?.id) {
+      // The last meeting is over.
+      // Disable the "Change my attendance" button on the last meeting.
+      if (previousMeeting != null && previousMeeting.messageId != null) {
+        await telegram.editMessageTextSafe(
+          await _meetingAnnouncementText(meeting),
+          chat_id: mobileDevGroupChatId,
+          message_id: meeting.messageId,
+          reply_markup: null, // No button anymore.
+        );
+      }
+
+      // Then, wait until three hours before the next meeting to announce it.
+      previousMeeting = meeting;
+      final durationUntilNext =
+          Instant.now().timeUntil(meeting.start).toDuration;
+      await Future<void>.delayed(durationUntilNext - Duration(hours: 3));
+
+      final message = await telegram.sendMessage(
+        mobileDevGroupChatId,
+        await _meetingAnnouncementText(meeting),
+        reply_markup: changeAttendanceKeyboard,
+      );
+      await meetingBloc.saveMessageId(meeting.id, message.message_id);
+    } else {
+      // The meeting is the same, it just got updated.
+      // So, update the message.
+      await telegram.editMessageTextSafe(
         await _meetingAnnouncementText(meeting),
         chat_id: mobileDevGroupChatId,
-        message_id: message.message_id,
-        reply_markup: isOver ? null : changeAttendanceKeyboard,
+        message_id: meeting.messageId,
+        reply_markup: changeAttendanceKeyboard,
       );
-    } on HttpClientException catch (e) {
-      if (e.cause.contains('message is not modified')) {
-        // This is okay.
-      } else {
-        rethrow;
-      }
     }
-    if (isOver) {
-      await subscription.cancel();
-    }
-  });
+  }
 }
 
 Future<String> _meetingAnnouncementText(Meeting meeting) async {

@@ -59,10 +59,6 @@ void main() async {
   final bot = await teledart.start();
   botName = bot.username;
 
-  if (nextMeeting.messageId == null) {
-    sendMeetingAnnouncement(nextMeeting);
-  }
-
   // Gets invoked when any message or event gets received.
   teledart.onMessage(entityType: '*').listen((message) {
     if (message.chat.id == mobileDevGroupChatId) {
