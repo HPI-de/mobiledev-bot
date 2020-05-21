@@ -102,7 +102,7 @@ Future<void> makeMemberFeelBad(Member member) async {
   }
 }
 
-void sendMeetingAnnouncements(Meeting meeting) async {
+void sendMeetingAnnouncements() async {
   final changeAttendanceKeyboard = InlineKeyboardMarkup(
     inline_keyboard: [
       [
@@ -117,32 +117,45 @@ void sendMeetingAnnouncements(Meeting meeting) async {
   Meeting previousMeeting;
 
   await for (final meeting in meetingBloc.getNextStream()) {
-    if (meeting.id != previousMeeting?.id) {
+    if (meeting?.id != previousMeeting?.id) {
       // The last meeting is over.
+      logger.d(
+          'The last meeting (${previousMeeting?.id}) is over. The next meeting is ${meeting?.id}');
       // Disable the "Change my attendance" button on the last meeting.
       if (previousMeeting != null && previousMeeting.messageId != null) {
         await telegram.editMessageTextSafe(
-          await _meetingAnnouncementText(meeting),
+          await _meetingAnnouncementText(previousMeeting),
           chat_id: mobileDevGroupChatId,
-          message_id: meeting.messageId,
-          reply_markup: null, // No button anymore.
+          message_id: previousMeeting.messageId,
+          reply_markup: InlineKeyboardMarkup(
+            inline_keyboard: [],
+          ), // No button anymore.
         );
       }
 
       // Then, wait until three hours before the next meeting to announce it.
-      previousMeeting = meeting;
-      final durationUntilNext =
-          Instant.now().timeUntil(meeting.start).toDuration;
-      await Future<void>.delayed(durationUntilNext - Duration(hours: 3));
+      if (meeting != null) {
+        final durationUntilAnnouncement =
+            Instant.now().timeUntil(meeting.start).toDuration -
+                Duration(seconds: 5);
+        logger.d('The next meeting will start in $durationUntilAnnouncement.');
+        if (durationUntilAnnouncement > Duration.zero) {
+          await Future<void>.delayed(durationUntilAnnouncement);
+        }
 
-      final message = await telegram.sendMessage(
-        mobileDevGroupChatId,
-        await _meetingAnnouncementText(meeting),
-        reply_markup: changeAttendanceKeyboard,
-      );
-      await meetingBloc.saveMessageId(meeting.id, message.message_id);
-    } else {
+        final message = await telegram.sendMessage(
+          mobileDevGroupChatId,
+          await _meetingAnnouncementText(meeting),
+          reply_markup: changeAttendanceKeyboard,
+        );
+        previousMeeting = await meetingBloc.saveMessageId(
+          meeting.id,
+          message.message_id,
+        );
+      }
+    } else if (meeting.id != null) {
       // The meeting is the same, it just got updated.
+      logger.d('The next meeting (${meeting.id}) got updated.');
       // So, update the message.
       await telegram.editMessageTextSafe(
         await _meetingAnnouncementText(meeting),
@@ -173,7 +186,7 @@ Future<String> _meetingAnnouncementText(Meeting meeting) async {
             '\n• ${await _getParticipantText(participant)}',
         ].join();
 
-  return 'Next meeting: ${_meetingTimePattern.format(time)}\n'
+  return '${meeting.id}\nNext meeting: ${_meetingTimePattern.format(time)}\n'
       'Participants: $participants';
 }
 
