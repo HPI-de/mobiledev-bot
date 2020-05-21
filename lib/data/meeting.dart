@@ -4,6 +4,7 @@ import 'package:rxdart/rxdart.dart';
 import 'package:sembast/sembast.dart';
 import 'package:time_machine/time_machine.dart';
 
+import '../utils.dart';
 import 'db.dart';
 
 const meetingBloc = MeetingBloc();
@@ -73,20 +74,28 @@ class _MeetingService {
 
   Stream<Meeting> getMeeting(int id) =>
       _store.record(id).onSnapshot(db).map((s) => Meeting.fromJson(s.value));
+
+  /// Returns the next meeting, or the current meeting if one is currently
+  /// running.
   Stream<Meeting> getNextMeeting() {
-    // Returns a stream that contains the latest document from the database.
     // Because the filter depends on the current time, we also execute the query
     // every two minutes, so that even if the underlying document in the
     // database doesn't change, we still get the correct meeting.
-    return Stream<void>.periodic(Duration(minutes: 2))
+    return Stream<void>.periodic(Duration(seconds: 5))
         .switchMap((_) => _store
             .query(
               finder: Finder(
-                limit: 1,
-                filter: Filter.greaterThan('start', Instant.now().epochSeconds),
+                // limit: 1,
+                filter: Filter.greaterThan('end', Instant.now().epochSeconds),
+                sortOrders: [SortOrder('start')],
               ),
             )
             .onSnapshots(db)
+            .distinctUnique()
+            .doOnData(
+              (meeting) => logger.d(
+                  'New meeting ${meeting.map((m) => m['start']).toList()} discovered.'),
+            )
             .map((m) => m.firstOrNull))
         .map((m) => m == null ? null : Meeting.fromJson(m.value));
   }
@@ -105,6 +114,7 @@ class _MeetingService {
 class Meeting {
   const Meeting({
     @required this.start,
+    @required this.end,
     @required this.participantIds,
     this.messageId,
   })  : assert(start != null),
@@ -113,12 +123,16 @@ class Meeting {
   Meeting.fromJson(Map<String, dynamic> json)
       : this(
           start: Instant.fromEpochSeconds(json['start']),
+          end: Instant.fromEpochSeconds(json['end']),
           participantIds:
               (json['participantIds'] as List<dynamic>).cast<int>().toSet(),
+          messageId: json['messageId'],
         );
 
   int get id => start.epochSeconds;
   final Instant start;
+  final Instant end;
+  bool get isOver => Instant.now() > end;
   final Set<int> participantIds;
   final int messageId;
 
@@ -128,6 +142,7 @@ class Meeting {
   }) {
     return Meeting(
       start: start,
+      end: end,
       participantIds: participantIds ?? this.participantIds,
       messageId: messageId ?? this.messageId,
     );
@@ -136,7 +151,9 @@ class Meeting {
   Map<String, dynamic> toJson() {
     return {
       'start': start.epochSeconds,
+      'end': end.epochSeconds,
       'participantIds': participantIds.toList(),
+      'messageId': messageId,
     };
   }
 }
